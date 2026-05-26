@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRUD Feedbacks</title>
+
+<style>
+
+/* RESET */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+/* BODY */
+body{
+    background:#0d0d0d;
+    color:white;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+/* CONTAINER */
+.container{
+    width:100%;
+    max-width:1000px;
+    background:#161616;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 0 20px rgba(128,0,255,0.3);
+}
+
+/* TÍTULO */
+h1{
+    text-align:center;
+    margin-bottom:25px;
+    color:#b266ff;
+}
+
+/* FORM */
+form{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:15px;
+    margin-bottom:30px;
+}
+
+/* INPUT GROUP */
+.input-group{
+    display:flex;
+    flex-direction:column;
+}
+
+/* LABEL */
+label{
+    margin-bottom:5px;
+    color:#d9b3ff;
+}
+
+/* INPUTS E TEXTAREA */
+input,
+textarea,
+select{
+    padding:10px;
+    border:1px solid #8000ff;
+    border-radius:8px;
+    background:#1f1f1f;
+    color:white;
+}
+
+/* TEXTAREA */
+textarea{
+    resize:none;
+    height:100px;
+}
+
+/* FOCUS */
+input:focus,
+textarea:focus,
+select:focus{
+    outline:none;
+    border-color:#b266ff;
+    box-shadow:0 0 8px #8000ff;
+}
+
+/* BOTÃO */
+button{
+    background:#8000ff;
+    color:white;
+    border:none;
+    border-radius:8px;
+    padding:12px;
+    cursor:pointer;
+    font-weight:bold;
+    transition:0.3s;
+}
+
+/* HOVER */
+button:hover{
+    background:#9933ff;
+}
+
+/* TABELA */
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+/* CÉLULAS */
+th, td{
+    padding:15px;
+    text-align:center;
+}
+
+/* CABEÇALHO */
+th{
+    background:#8000ff;
+}
+
+/* LINHAS */
+td{
+    background:#1f1f1f;
+    border-bottom:1px solid #333;
+}
+
+/* BOTÕES AÇÕES */
+.acoes button{
+    margin:0 5px;
+}
+
+/* EDITAR */
+.editar{
+    background:#5e17eb;
+}
+
+/* EXCLUIR */
+.excluir{
+    background:#ff1a75;
+}
+
+/* MODAL */
+.modal{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.7);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+/* MODAL CONTENT */
+.modal-content{
+    background:#161616;
+    padding:30px;
+    border-radius:15px;
+    width:350px;
+    text-align:center;
+    border:1px solid #8000ff;
+}
+
+/* BOTÕES MODAL */
+.modal-buttons{
+    margin-top:20px;
+    display:flex;
+    justify-content:center;
+    gap:15px;
+}
+
+/* ESCONDER MODAL */
+.hidden{
+    display:none;
+}
+
+/* CONTADOR */
+.contador{
+    font-size:12px;
+    margin-top:5px;
+    color:#b266ff;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>CRUD - Feedbacks</h1>
+
+<form id="feedbackForm">
+
+<input type="hidden" id="editIndex">
+
+<div class="input-group">
+<label>Nome do Usuário</label>
+<input type="text" id="nome" required>
+</div>
+
+<div class="input-group">
+<label>Email</label>
+<input type="email" id="email" required>
+</div>
+
+<div class="input-group">
+<label>Comentário (Opcional)</label>
+<textarea id="comentario" maxlength="100"></textarea>
+<div class="contador">
+<span id="contadorTexto">0</span>/100 caracteres
+</div>
+</div>
+
+<div class="input-group">
+<label>Avaliação</label>
+
+<select id="avaliacao" required>
+<option value="">Selecione</option>
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+
+</select>
+
+</div>
+
+<button type="submit" id="btnSalvar">Salvar</button>
+
+</form>
+
+<table>
+
+<thead>
+<tr>
+<th>Usuário</th>
+<th>Email</th>
+<th>Comentário</th>
+<th>Avaliação</th>
+<th>Ações</th>
+</tr>
+</thead>
+
+<tbody id="tabelaFeedbacks"></tbody>
+
+</table>
+
+</div>
+
+<div id="modalConfirmacao" class="modal hidden">
+
+<div class="modal-content">
+
+<h2>Confirmar Exclusão</h2>
+
+<p>Deseja realmente excluir este feedback?</p>
+
+<div class="modal-buttons">
+<button id="confirmarExcluir">Sim</button>
+<button id="cancelarExcluir">Cancelar</button>
+</div>
+
+</div>
+</div>
+
+<script>
+
+// ELEMENTOS HTML
+const form = document.getElementById('feedbackForm');
+const tabela = document.getElementById('tabelaFeedbacks');
+const editIndex = document.getElementById('editIndex');
+const btnSalvar = document.getElementById('btnSalvar');
+
+const modal = document.getElementById('modalConfirmacao');
+const confirmarExcluir = document.getElementById('confirmarExcluir');
+const cancelarExcluir = document.getElementById('cancelarExcluir');
+
+const comentario = document.getElementById('comentario');
+const contadorTexto = document.getElementById('contadorTexto');
+
+// ARRAY FEEDBACKS
+let feedbacks = [];
+
+// ÍNDICE EXCLUSÃO
+let indexExcluir = null;
+
+// CONTADOR DE CARACTERES
+comentario.addEventListener('input', () => {
+    contadorTexto.textContent = comentario.value.length;
+});
+
+// FORMULÁRIO (SALVAR / EDITAR)
+form.addEventListener('submit', function(e){
+
+    e.preventDefault();
+
+    // CAPTURA DOS DADOS
+    const nome = document.getElementById('nome').value;
+    const email = document.getElementById('email').value;
+    const comentarioTexto = comentario.value;
+    const avaliacao = document.getElementById('avaliacao').value;
+
+    // OBJETO
+    const feedback = {
+        nome,
+        email,
+        comentarioTexto,
+        avaliacao
+    };
+
+    // CADASTRO OU EDIÇÃO
+    if(editIndex.value === ''){
+        feedbacks.push(feedback);
+    }else{
+        feedbacks[editIndex.value] = feedback;
+        editIndex.value = '';
+        btnSalvar.textContent = 'Salvar'; // Volta o texto original do botão
+    }
+
+    // LIMPA FORMULÁRIO
+    form.reset();
+
+    // RESETA CONTADOR
+    contadorTexto.textContent = 0;
+
+    // RENDERIZA TABELA
+    renderizarTabela();
+});
+
+// RENDERIZA TABELA
+function renderizarTabela(){
+    tabela.innerHTML = '';
+
+    feedbacks.forEach((feedback, index)=>{
+        const linha = document.createElement('tr');
+
+        linha.innerHTML = `
+            <td>${feedback.nome}</td>
+            <td>${feedback.email}</td>
+            <td>${feedback.comentarioTexto || 'Sem comentário'}</td>
+            <td>${feedback.avaliacao} / 5</td>
+            <td class="acoes">
+                <button class="editar" onclick="editarFeedback(${index})">
+                Editar
+                </button>
+
+                <button class="excluir" onclick="abrirModal(${index})">
+                Excluir
+                </button>
+            </td>
+        `;
+
+        tabela.appendChild(linha);
+    });
+}
+
+// EDITAR FEEDBACK
+function editarFeedback(index) {
+    const feedback = feedbacks[index];
+    
+    document.getElementById('nome').value = feedback.nome;
+    document.getElementById('email').value = feedback.email;
+    comentario.value = feedback.comentarioTexto;
+    document.getElementById('avaliacao').value = feedback.avaliacao;
+    
+    // Atualiza o contador de caracteres para o texto carregado
+    contadorTexto.textContent = feedback.comentarioTexto.length;
+    
+    editIndex.value = index;
+    btnSalvar.textContent = 'Atualizar'; // Muda o texto para indicar edição
+}
+
+// MODAL EXCLUSÃO
+function abrirModal(index) {
+    indexExcluir = index;
+    modal.classList.remove('hidden');
+}
+
+function fecharModal() {
+    modal.classList.add('hidden');
+    indexExcluir = null;
+}
+
+// Eventos do Modal
+cancelarExcluir.addEventListener('click', fecharModal);
+
+confirmarExcluir.addEventListener('click', () => {
+    if (indexExcluir !== null) {
+        feedbacks.splice(indexExcluir, 1);
+        renderizarTabela();
+        fecharModal();
+    }
+});
+
+</script>
+</body>
+</html>
