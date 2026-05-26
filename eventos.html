@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRUD Eventos</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+body{background:#0d0d0d;color:white;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:30px 20px;}
+.container{width:100%;max-width:960px;background:#161616;padding:30px;border-radius:15px;box-shadow:0 0 20px rgba(128,0,255,0.3);}
+h1{text-align:center;margin-bottom:25px;color:#b266ff;}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:20px;}
+.input-group{display:flex;flex-direction:column;}
+.input-group.full{grid-column:1/-1;}
+label{margin-bottom:5px;color:#d9b3ff;font-size:14px;}
+.char-count{font-size:11px;color:#888;text-align:right;margin-top:3px;}
+input,select,textarea{padding:10px;border:1px solid #8000ff;border-radius:8px;background:#1f1f1f;color:white;font-size:14px;font-family:Arial,sans-serif;}
+textarea{resize:vertical;min-height:80px;}
+.btn-row{display:flex;gap:10px;margin-top:5px;}
+button.salvar{background:#8000ff;color:white;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;font-weight:bold;flex:1;}
+button.salvar:hover{background:#9933ff;}
+button.cancelar{background:#333;color:white;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;font-weight:bold;flex:1;display:none;}
+button.cancelar:hover{background:#444;}
+.edit-badge{display:none;background:#3a1a6e;color:#c89aff;font-size:12px;padding:5px 12px;border-radius:20px;margin-bottom:12px;width:fit-content;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:12px 15px;text-align:left;}
+th{background:#8000ff;font-size:13px;}
+td{background:#1f1f1f;border-bottom:1px solid #333;font-size:13px;vertical-align:top;}
+.desc-cell,.end-cell{max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hora-badge{display:inline-block;background:#3a1a6e;color:#c89aff;padding:2px 10px;border-radius:20px;font-size:12px;}
+.acoes{white-space:nowrap;}
+.acoes button{margin:0 3px;padding:5px 12px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold;}
+.editar{background:#5e17eb;color:white;}
+.editar:hover{background:#7a2fff;}
+.excluir{background:#ff1a75;color:white;}
+.excluir:hover{background:#ff4d94;}
+.empty{text-align:center;color:#666;padding:30px;font-size:14px;}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;justify-content:center;align-items:center;}
+.modal-box{background:#161616;padding:30px;border-radius:15px;width:340px;text-align:center;border:1px solid #8000ff;}
+.modal-box h2{margin-bottom:10px;color:#b266ff;}
+.modal-box p{color:#ccc;font-size:14px;margin-bottom:20px;}
+.modal-btns{display:flex;gap:12px;justify-content:center;}
+.modal-btns button{padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;}
+.btn-confirmar{background:#ff1a75;color:white;}
+.btn-confirmar:hover{background:#ff4d94;}
+.btn-cancelar{background:#333;color:white;}
+.btn-cancelar:hover{background:#444;}
+.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>CRUD - Eventos</h1>
+
+  <span class="edit-badge" id="editBadge">✏️ Editando evento</span>
+
+  <div class="form-grid">
+    <div class="input-group">
+      <label>Nome do Evento</label>
+      <input type="text" id="nomeEvento" placeholder="Ex: Festival de Verão">
+    </div>
+    <div class="input-group">
+      <label>Data do Evento</label>
+      <input type="text" id="dataEvento" placeholder="dd/mm/aaaa" maxlength="10">
+    </div>
+    <div class="input-group">
+      <label>Horário</label>
+      <select id="horario">
+        <option value="">Selecione</option>
+        <option>00h</option><option>01h</option><option>02h</option><option>03h</option>
+        <option>04h</option><option>05h</option><option>06h</option><option>07h</option>
+        <option>08h</option><option>09h</option><option>10h</option><option>11h</option>
+        <option>12h</option><option>13h</option><option>14h</option><option>15h</option>
+        <option>16h</option><option>17h</option><option>18h</option><option>19h</option>
+        <option>20h</option><option>21h</option><option>22h</option><option>23h</option>
+      </select>
+    </div>
+    <div class="input-group full">
+      <label>Endereço do Evento</label>
+      <input type="text" id="enderecoEvento" placeholder="Rua, número, bairro, cidade">
+    </div>
+    <div class="input-group full">
+      <label>Descrição <span style="color:#888">(máx. 200 caracteres)</span></label>
+      <textarea id="descricaoEvento" placeholder="Descreva brevemente o evento..."></textarea>
+      <div class="char-count" id="charCount">0 / 200</div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="salvar" onclick="salvar()">Salvar</button>
+    <button class="cancelar" id="btnCancelar" onclick="cancelarEdicao()">Cancelar</button>
+  </div>
+
+  <br>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Evento</th>
+        <th>Data</th>
+        <th>Horário</th>
+        <th>Endereço</th>
+        <th>Descrição</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaEventos"></tbody>
+  </table>
+  <div class="empty hidden" id="emptyMsg">Nenhum evento cadastrado ainda.</div>
+</div>
+
+<div id="modalConfirmacao" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h2>Confirmar Exclusão</h2>
+    <p>Deseja realmente excluir este evento?</p>
+    <div class="modal-btns">
+      <button class="btn-confirmar" onclick="confirmarExcluir()">Sim, excluir</button>
+      <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let eventos = [];
+let editIndex = null;
+let indexExcluir = null;
+
+const descArea = document.getElementById('descricaoEvento');
+const charCount = document.getElementById('charCount');
+
+descArea.addEventListener('input', function() {
+  if (this.value.length > 200) this.value = this.value.slice(0, 200);
+  charCount.textContent = this.value.length + ' / 200';
+});
+
+document.getElementById('dataEvento').addEventListener('input', function() {
+  let v = this.value.replace(/\D/g, '').slice(0, 8);
+  if (v.length > 4) v = v.slice(0,2) + '/' + v.slice(2,4) + '/' + v.slice(4);
+  else if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+  this.value = v;
+});
+
+function salvar() {
+  const nome = document.getElementById('nomeEvento').value.trim();
+  const data = document.getElementById('dataEvento').value.trim();
+  const horario = document.getElementById('horario').value;
+  const endereco = document.getElementById('enderecoEvento').value.trim();
+  const descricao = descArea.value.trim();
+
+  if (!nome || !data || !horario || !endereco) {
+    alert('Preencha ao menos nome, data, horário e endereço.');
+    return;
+  }
+
+  const evento = { nome, data, horario, endereco, descricao };
+
+  if (editIndex !== null) {
+    eventos[editIndex] = evento;
+    editIndex = null;
+  } else {
+    eventos.push(evento);
+  }
+
+  limparForm();
+  renderizar();
+}
+
+function limparForm() {
+  document.getElementById('nomeEvento').value = '';
+  document.getElementById('dataEvento').value = '';
+  document.getElementById('horario').value = '';
+  document.getElementById('enderecoEvento').value = '';
+  descArea.value = '';
+  charCount.textContent = '0 / 200';
+  document.getElementById('editBadge').style.display = 'none';
+  document.getElementById('btnCancelar').style.display = 'none';
+}
+
+function cancelarEdicao() {
+  editIndex = null;
+  limparForm();
+}
+
+function editar(index) {
+  const ev = eventos[index];
+  document.getElementById('nomeEvento').value = ev.nome;
+  document.getElementById('dataEvento').value = ev.data;
+  document.getElementById('horario').value = ev.horario;
+  document.getElementById('enderecoEvento').value = ev.endereco;
+  descArea.value = ev.descricao;
+  charCount.textContent = ev.descricao.length + ' / 200';
+  editIndex = index;
+  document.getElementById('editBadge').style.display = 'inline-block';
+  document.getElementById('btnCancelar').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function abrirModal(index) {
+  indexExcluir = index;
+  document.getElementById('modalConfirmacao').classList.remove('hidden');
+}
+
+function fecharModal() {
+  indexExcluir = null;
+  document.getElementById('modalConfirmacao').classList.add('hidden');
+}
+
+function confirmarExcluir() {
+  if (indexExcluir !== null) {
+    eventos.splice(indexExcluir, 1);
+    renderizar();
+  }
+  fecharModal();
+}
+
+function renderizar() {
+  const tabela = document.getElementById('tabelaEventos');
+  const emptyMsg = document.getElementById('emptyMsg');
+  tabela.innerHTML = '';
+
+  if (eventos.length === 0) {
+    emptyMsg.classList.remove('hidden');
+    return;
+  }
+  emptyMsg.classList.add('hidden');
+
+  eventos.forEach(function(ev, i) {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><strong>' + ev.nome + '</strong></td>' +
+      '<td>' + ev.data + '</td>' +
+      '<td><span class="hora-badge">' + ev.horario + '</span></td>' +
+      '<td class="end-cell" title="' + ev.endereco + '">' + ev.endereco + '</td>' +
+      '<td class="desc-cell" title="' + ev.descricao + '">' + (ev.descricao || '—') + '</td>' +
+      '<td class="acoes">' +
+        '<button class="editar" onclick="editar(' + i + ')">Editar</button>' +
+        '<button class="excluir" onclick="abrirModal(' + i + ')">Excluir</button>' +
+      '</td>';
+    tabela.appendChild(tr);
+  });
+}
+
+renderizar();
+</script>
+</body>
+</html>
