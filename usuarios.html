@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Usuários</title>
+
+    <!-- CSS DA PÁGINA -->
+    <style>
+
+        /* RESET BÁSICO */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        /* ESTILIZAÇÃO DO BODY */
+        body {
+            background-color: #0d0d0d;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* CONTAINER PRINCIPAL */
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: #161616;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(128, 0, 255, 0.3);
+        }
+
+        /* TÍTULO */
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #b266ff;
+        }
+
+        /* FORMULÁRIO */
+        form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        /* GRUPOS DE INPUT */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* LABELS */
+        label {
+            margin-bottom: 5px;
+            color: #d9b3ff;
+        }
+
+        /* INPUTS */
+        input {
+            padding: 10px;
+            border: 1px solid #8000ff;
+            border-radius: 8px;
+            background-color: #1f1f1f;
+            color: white;
+        }
+
+        /* EFEITO AO CLICAR NO INPUT */
+        input:focus {
+            outline: none;
+            border-color: #b266ff;
+            box-shadow: 0 0 8px #8000ff;
+        }
+
+        /* BOTÕES */
+        button {
+            background-color: #8000ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        /* HOVER DOS BOTÕES */
+        button:hover {
+            background-color: #9933ff;
+        }
+
+        /* TABELA */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        /* CÉLULAS DA TABELA */
+        th, td {
+            padding: 15px;
+            text-align: center;
+        }
+
+        /* CABEÇALHO DA TABELA */
+        th {
+            background-color: #8000ff;
+        }
+
+        /* LINHAS DA TABELA */
+        td {
+            background-color: #1f1f1f;
+            border-bottom: 1px solid #333;
+        }
+
+        /* BOTÕES DE AÇÃO */
+        .acoes button {
+            margin: 0 5px;
+            padding: 8px 12px;
+        }
+
+        /* BOTÃO EDITAR */
+        .editar {
+            background-color: #5e17eb;
+        }
+
+        /* BOTÃO EXCLUIR */
+        .excluir {
+            background-color: #ff1a75;
+        }
+
+        /* MODAL DE CONFIRMAÇÃO */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* CONTEÚDO DO MODAL */
+        .modal-content {
+            background-color: #161616;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            width: 350px;
+            border: 1px solid #8000ff;
+        }
+
+        /* TÍTULO DO MODAL */
+        .modal-content h2 {
+            margin-bottom: 15px;
+            color: #b266ff;
+        }
+
+        /* BOTÕES DO MODAL */
+        .modal-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        /* CLASSE PARA ESCONDER O MODAL */
+        .hidden {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- CONTAINER PRINCIPAL -->
+    <div class="container">
+
+        <!-- TÍTULO -->
+        <h1>CRUD - Usuários</h1>
+
+        <!-- FORMULÁRIO -->
+        <form id="adminForm">
+
+            <!-- INPUT ESCONDIDO PARA IDENTIFICAR EDIÇÃO -->
+            <input type="hidden" id="editIndex">
+
+            <!-- CAMPO CÓDIGO -->
+            <div class="input-group">
+                <label>CPF</label>
+                <input type="text" id="cpf" maxlength="11" required>
+            </div>
+
+            <!-- CAMPO NOME -->
+            <div class="input-group">
+                <label>Nome</label>
+                <input type="text" id="nome" required>
+            </div>
+
+            <!-- CAMPO EMAIL -->
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="email" required>
+            </div>
+
+            <!-- BOTÃO SALVAR -->
+            <button type="submit">Salvar</button>
+        </form>
+
+        <!-- TABELA -->
+        <table>
+            <thead>
+                <tr>
+                    <th>CPF</th>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+
+            <!-- CORPO DA TABELA -->
+            <tbody id="tabelaAdmins"></tbody>
+        </table>
+    </div>
+
+    <!-- MODAL DE CONFIRMAÇÃO -->
+    <div id="modalConfirmacao" class="modal hidden">
+        <div class="modal-content">
+            <h2>Confirmar Exclusão</h2>
+            <p>Deseja realmente excluir este usuário?</p>
+
+            <div class="modal-buttons">
+                <button id="confirmarExcluir">Sim</button>
+                <button id="cancelarExcluir">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+
+        // CAPTURA DOS ELEMENTOS HTML
+        const form = document.getElementById('adminForm');
+        const tabela = document.getElementById('tabelaAdmins');
+        const editIndex = document.getElementById('editIndex');
+
+        const modal = document.getElementById('modalConfirmacao');
+        const confirmarExcluir = document.getElementById('confirmarExcluir');
+        const cancelarExcluir = document.getElementById('cancelarExcluir');
+
+        // ARRAY QUE ARMAZENA OS USUÁRIOS
+        let usuarios = [];
+
+        // VARIÁVEL PARA GUARDAR O ÍNDICE DO ITEM A SER EXCLUÍDO
+        let indexExcluir = null;
+
+        // EVENTO DO FORMULÁRIO
+        form.addEventListener('submit', function(e) {
+
+            // IMPEDE O RECARREGAMENTO DA PÁGINA
+            e.preventDefault();
+
+            // CAPTURA DOS VALORES DOS INPUTS
+            const cpf = document.getElementById('cpf').value;
+            const nome = document.getElementById('nome').value;
+            const email = document.getElementById('email').value;
+
+            // OBJETO ADMINISTRADOR
+            // VERIFICA SE O CPF POSSUI EXATAMENTE 11 DÍGITOS
+            if (cpf.length !== 11 || isNaN(cpf)) {
+                alert('O CPF deve conter exatamente 11 números!');
+                return;
+            }
+
+            // OBJETO USUÁRIO
+            const admin = {
+                cpf,
+                nome,
+                email
+            };
+
+            // VERIFICA SE É CADASTRO OU EDIÇÃO
+            if (editIndex.value === '') {
+                usuarios.push(admin);
+            } else {
+                usuarios[editIndex.value] = admin;
+                editIndex.value = '';
+            }
+
+            // LIMPA O FORMULÁRIO
+            form.reset();
+
+            // ATUALIZA A TABELA
+            renderizarTabela();
+        });
+
+        // FUNÇÃO PARA RENDERIZAR A TABELA
+        function renderizarTabela() {
+
+            // LIMPA A TABELA
+            tabela.innerHTML = '';
+
+            // PERCORRE O ARRAY DE ADMINISTRADORES
+            usuarios.forEach((admin, index) => {
+
+                // CRIA UMA NOVA LINHA
+                const linha = document.createElement('tr');
+
+                // CONTEÚDO DA LINHA
+                linha.innerHTML = `
+                    <td>${admin.cpf}</td>
+                    <td>${admin.nome}</td>
+                    <td>${admin.email}</td>
+                    <td class="acoes">
+                        <button class="editar" onclick="editarAdmin(${index})">Editar</button>
+                        <button class="excluir" onclick="abrirModal(${index})">Excluir</button>
+                    </td>
+                `;
+
+                // ADICIONA A LINHA NA TABELA
+                tabela.appendChild(linha);
+            });
+        }
+
+        // FUNÇÃO PARA EDITAR UM ADMINISTRADOR
+        function editarAdmin(index) {
+
+            // CAPTURA O ADMINISTRADOR SELECIONADO
+            const admin = usuarios[index];
+
+            // PREENCHE OS INPUTS
+            document.getElementById('cpf').value = admin.cpf;
+            document.getElementById('nome').value = admin.nome;
+            document.getElementById('email').value = admin.email;
+
+            // DEFINE O ÍNDICE DA EDIÇÃO
+            editIndex.value = index;
+        }
+
+        // ABRE O MODAL DE CONFIRMAÇÃO
+        function abrirModal(index) {
+            indexExcluir = index;
+            modal.classList.remove('hidden');
+        }
+
+        // CONFIRMA A EXCLUSÃO
+        confirmarExcluir.addEventListener('click', () => {
+
+            // REMOVE O ITEM DO ARRAY
+            if (indexExcluir !== null) {
+                usuarios.splice(indexExcluir, 1);
+                renderizarTabela();
+            }
+
+            // FECHA O MODAL
+            fecharModal();
+        });
+
+        // CANCELA A EXCLUSÃO
+        cancelarExcluir.addEventListener('click', fecharModal);
+
+        // FUNÇÃO PARA FECHAR O MODAL
+        function fecharModal() {
+            modal.classList.add('hidden');
+            indexExcluir = null;
+        }
+
+    </script>
+</body>
+</html>
+```
